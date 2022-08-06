@@ -1,2 +1,2 @@
-# comment1
-# changes
+class LinearReg:
+    pass
