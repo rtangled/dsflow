@@ -3,3 +3,6 @@
 
 # Ignore .idea folder
 .idea/
+
+# Ignore byte compiled files
+__pycache__/

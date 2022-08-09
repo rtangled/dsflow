@@ -7,6 +7,7 @@ class StatsModReg:
 
     def __init__(self, data, x_cols, y_col):
         self.data = data
+        self.x_train = data[x_cols]
         self.x_train = sm.add_constant(data[x_cols])
         self.y_train = data[y_col]
 
@@ -30,3 +31,4 @@ if __name__ == "__main__":
     sm_model = sm_reg.model_train()
     print(sm_reg.eval_model(sm_model))
     print(sm_model.summary())
+    # print(sm_model.fvalue, sm_model.f_pvalue)
