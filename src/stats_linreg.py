@@ -5,10 +5,11 @@ from sklearn.metrics import r2_score
 
 class StatsModReg:
 
-    def __init__(self, data, x_cols, y_col):
+    def __init__(self, data, x_cols, y_col, fit_intercept=True):
         self.data = data
         self.x_train = data[x_cols]
-        self.x_train = sm.add_constant(data[x_cols])
+        if fit_intercept:
+            self.x_train = sm.add_constant(data[x_cols])
         self.y_train = data[y_col]
 
     def model_train(self):

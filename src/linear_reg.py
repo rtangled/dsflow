@@ -24,8 +24,23 @@ class LinearReg:
         lin_reg.fit(self.x_train, self.y_train)
         return lin_reg
 
-    def multi_col(self):
-        pass
+    def get_vif(self):
+        if self.fit_intercept:
+            vif_list = [0]
+        else:
+            vif_list = []
+        for x_col in self.x_cols:
+            reg = LinearRegression(fit_intercept=True)
+            y = self.data[x_col].values
+            x_col_names = [i for i in self.x_cols if i != x_col]
+            x_vif = self.data[x_col_names].values
+            reg.fit(x_vif, y)
+            rsq = reg.score(x_vif, y)
+            vif = np.round(1 / (1 - rsq), 1)
+            vif_list.append(vif)
+        vif_out = np.array(vif_list)
+        vif_out = vif_out.reshape((vif_out.shape[0], 1))
+        return (vif_out)
 
     def get_betas(self):
         x = self.x_train
@@ -37,7 +52,7 @@ class LinearReg:
         inv_xt_x = np.linalg.inv(xt_x)
         xt_y = np.matmul(xt, y)
         beta = np.matmul(inv_xt_x, xt_y)
-        print(beta)
+        return beta
 
     def get_stats(self, reg_model):
         x = self.x_train
@@ -47,6 +62,7 @@ class LinearReg:
         # no. of examples (data points)
         n = x.shape[0]
         # calculate predicted values
+        print(x.shape)
         y_pred = reg_model.predict(x)
 
         # calculate r-square and adj r-square scores
@@ -66,7 +82,32 @@ class LinearReg:
         MSE = SSE / (n-p-1)
         fstat = MSR / MSE
         pvalue = 1 - stats.f.cdf(fstat, self.df_m, self.df_r)
-        print(fstat, pvalue)
+        # print(fstat, pvalue)
 
         # calculate t-stat, p-value, std-err, confidence interval
+        if self.fit_intercept:
+            x = np.append(np.ones((x.shape[0], 1)), x, axis=1)
+        var_beta = MSE * (np.linalg.inv(np.dot(x.T, x)).diagonal())
+        std_dev = np.sqrt(var_beta)
+        std_dev = std_dev.reshape((std_dev.shape[0], 1))
+        params = self.get_betas()
+        t_value = params / std_dev
+        t_value = t_value.reshape((t_value.shape[0], 1))
+
+        p_values = [2 * (1 - stats.t.cdf(np.abs(i), (n-p))) for i in t_value]
+
+        std_dev = np.round(std_dev, 3)
+        t_value = np.round(t_value, 3)
+        p_values = np.round(p_values, 3)
+
+        # get VIF values
+        vif = self.get_vif()
+        stats_arr = np.column_stack((params, std_dev, t_value, p_values, vif))
+        stats_df = pd.DataFrame(stats_arr)
+        stats_df.columns = ['coeff', 'std-err', 't-value', 'p-value', 'vif']
+        if self.fit_intercept:
+            stats_df.index = ["Intercept"] + self.x_cols
+        else:
+            stats_df.index = self.x_cols
+        return stats_df
 
